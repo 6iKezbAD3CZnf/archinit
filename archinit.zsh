@@ -151,6 +151,10 @@ visudo -cf $tmpfile \
     && { mv $tmpfile $MOUNT/etc/sudoers.d/wheel } \
     || { print "ERROR updating sudoers; no change made" }
 
+# Initramfs
+
+chrooted "mkinitcpio -P"
+
 # Boot Loader
 
 chrooted "grub-install --target=x86_64-efi --efi-directory=$BOOT[dir] --bootloader-id=GRUB"
