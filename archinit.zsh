@@ -5,7 +5,9 @@ typeset -a SERVICES PACKAGES
 
 # Configuration
 
-ISVM=true
+VM=true
+
+DOTFILES=true
 
 CONFIG=(
     username    tatsu
@@ -14,7 +16,7 @@ CONFIG=(
     locale      "en_US.UTF-8 UTF-8"
     lang        "en_US.UTF-8"
 )
-if $ISVM; then
+if $VM; then
     CONFIG+=(hostname ArchVM)
 else
     CONFIG+=(hostname Arch)
@@ -129,11 +131,15 @@ for servicename in $SERVICES; do
     chrooted systemctl enable $servicename
 done
 
-# Users / Passwords
+# Users, Groups and Passwords
 
 chrooted "useradd -m -G wheel \
     -s /usr/bin/$CONFIG[shell] \
     $CONFIG[username]"
+
+chrooted "groupadd vboxusers"
+
+chrooted "gpasswd -a vboxusers $CONFIG[username]"
 
 for user in root $CONFIG[username]; do
     chrooted "print -r $user:$user | chpasswd"
@@ -158,14 +164,17 @@ fi
 cp /etc/pacman.d/mirrorlist $MOUNT/etc/pacman.d/mirrorlist
 
 # Dotfiles
-HOME=/home/$CONFIG[username]
-URL="https://github.com/6iKezbAD3CZnf/dotfiles.git"
-COMMAND="/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME"
-chrooted "echo '.dotfiles' >> .gitignore"
-chrooted "git clone --bare $URL $HOME/.dotfiles"
-chrooted "$COMMAND config --local status.showUntrackedFiles no"
-chrooted "$COMMAND checkout -f"
-chrooted "$COMMAND submodule update --init --recursive"
+if $DOTFILES; then
+    HOME=/home/$CONFIG[username]
+    URL="https://github.com/6iKezbAD3CZnf/dotfiles.git"
+    COMMAND="/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME"
+    chrooted "echo '.dotfiles' >> .gitignore"
+    chrooted "git clone --bare $URL $HOME/.dotfiles"
+    chrooted "$COMMAND config --local status.showUntrackedFiles no"
+    chrooted "$COMMAND checkout -f"
+    chrooted "cd $HOME; \
+        $COMMAND submodule update --init --recursive"
+fi
 
 # End
 
