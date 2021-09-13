@@ -36,7 +36,17 @@ PACKAGES=(
     xorg-xinit
     networkmanager
     reflector
+    pulseaudio
 )
+
+if $VM; then
+    PACKAGES+=(
+        bluez
+        bluez-utils
+        pulsemixer
+        pulseaudio-bluetooth
+    )
+fi
 
 SERVICES=(
     NetworkManager
@@ -166,6 +176,12 @@ if [ -f ./pacman.conf ]; then
     cp ./pacman.conf $MOUNT/etc/pacman.conf
 fi
 cp /etc/pacman.d/mirrorlist $MOUNT/etc/pacman.d/mirrorlist
+
+# Bluetooth
+
+if [ -f ./bluetooth.conf ]; then
+    cp ./bluetooth.conf $MOUNT/etc/bluetooth/main.conf
+fi
 
 # Dotfiles
 if $DOTFILES; then
